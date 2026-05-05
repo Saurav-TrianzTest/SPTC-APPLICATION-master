@@ -1,7 +1,8 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using System;
 
 namespace SPTC_APPLICATION.Database
 {
@@ -22,9 +23,13 @@ namespace SPTC_APPLICATION.Database
 
         public static string Protect(string input)
         {
+            // Get salt from environment variable for better security
+            string salt = Environment.GetEnvironmentVariable("PASSWORD_SALT") ?? "";
+            string saltedInput = input + salt;
+            
             using (MD5 md5 = MD5.Create())
             {
-                byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+                byte[] inputBytes = Encoding.UTF8.GetBytes(saltedInput);
                 byte[] hashBytes = md5.ComputeHash(inputBytes);
 
                 StringBuilder stringBuilder = new StringBuilder();
@@ -36,8 +41,6 @@ namespace SPTC_APPLICATION.Database
                 return stringBuilder.ToString();
             }
         }
-
-
     }
 
     public static class Table

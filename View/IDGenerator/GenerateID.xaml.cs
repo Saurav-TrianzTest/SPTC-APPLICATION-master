@@ -28,13 +28,7 @@ namespace SPTC_APPLICATION.View
         private VideoCaptureDevice videoSource;
 
         public GenerateID()
-        {
-            InitializeComponent();
-            tboxAddressS.Text = AppState.DEFAULT_ADDRESSLINE2;
-            bDay.SelectedDate = DateTime.Today;
-            EventLogger.Post("VIEW :: ID GENERATE Window");
-            videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
-            btnStartPad.IsEnabled = false;
+            bDay.SelectedDate = DateTimeOffset.UtcNow.Date;
             if (videoDevices.Count == 0)
             {
                 EventLogger.Post("ERR :: No video devices found.");
@@ -47,13 +41,7 @@ namespace SPTC_APPLICATION.View
             videoSource.NewFrame += new NewFrameEventHandler(videoSource_NewFrame);
         }
 
-        public GenerateID(Franchise franchise, bool isDriver)
-        {
-            InitializeComponent();
-            bDay.SelectedDate = DateTime.Today;
-            this.franchise = franchise;
-            isUpdate = true;
-            EventLogger.Post("VIEW :: ID GENERATE Window id="+franchise.id);
+            bDay.SelectedDate = DateTimeOffset.UtcNow.Date;
             videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
             btnStartPad.IsEnabled = false;
             if (videoDevices.Count == 0)

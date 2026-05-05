@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,6 +17,9 @@ namespace SPTC_APPLICATION.View.Pages.Inputs
 {
     /// <summary>
     /// Interaction logic for ViolationInput.xaml
+    /// NOTE: This is a WPF Page, not ASP.NET Web Forms.
+    /// For cloud deployment, consider migrating to ASP.NET Core Razor Pages or Blazor
+    /// to enable web-based access and better cloud scalability.
     /// </summary>
     public partial class ViolationInput : Page
     {

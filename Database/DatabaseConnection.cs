@@ -1,13 +1,29 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Reflection;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
+using Amazon.SecretsManager;
+using Amazon.SecretsManager.Model;
+using Amazon;
+using Newtonsoft.Json;
+using System;
 
 namespace SPTC_APPLICATION.Database
 {
     public class DatabaseConnection
     {
         private static string connectionString;
+        private static IAmazonSecretsManager _secretsManagerClient;
+
+        private static IAmazonSecretsManager GetSecretsManagerClient()
+        {
+            if (_secretsManagerClient == null)
+            {
+                var region = Environment.GetEnvironmentVariable("AWS_REGION") ?? "us-east-1";
+                _secretsManagerClient = new AmazonSecretsManagerClient(RegionEndpoint.GetBySystemName(region));
+            }
+            return _secretsManagerClient;
+        }
 
         public DatabaseConnection(string connectionString)
         {
@@ -41,6 +57,57 @@ namespace SPTC_APPLICATION.Database
                 connectionString = $"Server={host};Database={database};Uid={username};Pwd={password};";
             }
 
+            // New constructor that retrieves connection string from AWS Secrets Manager
+            public Builder(string secretName)
+            {
+                try
+                {
+                    connectionString = GetConnectionStringFromSecretsManager(secretName).Result;
+                }
+                catch (Exception ex)
+                {
+                    Log = ConnectionLogs.EXCEPTION_OCCURED;
+                    throw new Exception($"Failed to retrieve connection string from Secrets Manager: {ex.Message}", ex);
+                }
+            }
+
+            private async Task<string> GetConnectionStringFromSecretsManager(string secretName)
+            {
+                try
+                {
+                    var client = GetSecretsManagerClient();
+                    var request = new GetSecretValueRequest
+                    {
+                        SecretId = secretName
+                    };
+
+                    var response = await client.GetSecretValueAsync(request);
+                    
+                    if (response.SecretString != null)
+                    {
+                        // Parse the secret JSON to build connection string
+                        dynamic secret = JsonConvert.DeserializeObject(response.SecretString);
+                        string host = secret.host;
+                        string database = secret.database;
+                        string username = secret.username;
+                        string password = secret.password;
+                        
+                        return $"Server={host};Database={database};Uid={username};Pwd={password};";
+                    }
+                    else
+                    {
+                        throw new Exception("Secret string is null");
+                    }
+                }
+                catch (ResourceNotFoundException)
+                {
+                    throw new Exception($"Secret '{secretName}' not found in AWS Secrets Manager");
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Error retrieving secret: {ex.Message}", ex);
+                }
+            }
 
             public async Task<bool> CreateAsync()
             {
